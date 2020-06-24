@@ -1,0 +1,103 @@
+---
+- name: Setup Prometheus
+  hosts: all
+  become: yes
+  vars:
+    username: prometheus
+    groupname: prometheus
+    tempdirectory: /tmp/prometheus
+    workingdirectory: /etc/prometheus
+    datadirectory: /var/lib/prometheus
+    subdirectories:
+      - /etc/prometheus/rules
+      - /etc/prometheus/rules.d
+      - /etc/prometheus/files_sd
+    prometheus_url: "https://github.com/prometheus/prometheus/releases/download/v2.19.1/prometheus-2.19.1.linux-amd64.tar.gz"
+    prometheus_version: "prometheus-2.19.1.linux-amd64"
+    prometheus_binaries:
+      - prometheus
+      - promtool
+
+  tasks:
+    - name: Add Prometheus Group
+      group:
+        name: "{{ groupname }}"
+        state: present
+
+    - name: Add Prometheus User
+      user:
+        name: "{{ username }}"
+        groups: "{{ groupname }}"
+        shell: /bin/bash
+        state: present
+
+    - name: Create Temp Direcotry
+      file:
+        state: directory
+        path: "{{ tempdirectory }}"
+
+    - name: Create Data Directory
+      file:
+        state: directory
+        path: "{{ datadirectory }}"
+
+    - name: Create Working Directory
+      file:
+        state: directory
+        path: "{{ workingdirectory }}"
+    
+    - name: Create Config Sub-Directories
+      file:
+        state: directory
+        path: "{{ item }}"
+      loop: "{{ subdirectories }}"
+
+    - name: Download & Extract Binary
+      unarchive:
+        dest: "{{ tempdirectory }}"
+        remote_src: yes
+        src: "{{ prometheus_url }}"
+
+    - name: Move Binaries to Path
+      copy:
+        dest: /usr/local/bin
+        remote_src: yes
+        src: "{{ tempdirectory }}/{{ prometheus_version }}/{{ item }}"
+      loop: "{{ prometheus_binaries }}"
+
+    - name: Move Libraries to Working Directory
+      copy:
+        dest: "{{ workingdirectory }}"
+        remote_src: yes
+        mode: '0755'
+        src: "{{ item }}"
+      with_items:
+        - "{{ tempdirectory }}/{{ prometheus_version }}/consoles"
+        - "{{ tempdirectory }}/{{ prometheus_version }}/console_libraries"
+
+    - name: Change Ownership of Directories
+      file:
+        path: "{{ item }}"
+        owner: "{{ username }}"
+        group: "{{ groupname }}"
+        recurse: yes
+      with_items:
+        - "{{ datadirectory }}"
+        - "{{ workingdirectory }}"
+
+    - name: Copy SystemD Service File
+      copy:
+        src: prometheus.service
+        dest: /etc/systemd/system/prometheus.service
+
+    - name: Copy Prometheus Config File
+      copy:
+        src: prometheus.yml
+        dest: "{{ workingdirectory }}"
+
+    - name: Start and Enable Prometheus
+      systemd:
+        daemon_reload: yes
+        enabled: yes
+        name: prometheus
+        state: started

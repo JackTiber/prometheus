@@ -1,0 +1,49 @@
+# my global config
+global:
+  scrape_interval:     15s
+  evaluation_interval: 30s
+  # scrape_timeout is set to the global default (10s).
+
+  external_labels:
+    monitor: workstation
+
+rule_files: []
+
+remote_write: []
+
+remote_read: []
+
+scrape_configs:
+- job_name: prometheus
+
+  honor_labels: true
+  # scrape_interval is defined by the configured global (15s).
+  # scrape_timeout is defined by the global default (10s).
+
+  # metrics_path defaults to '/metrics'
+  # scheme defaults to 'http'.
+
+  # file_sd_configs:
+  #   - files:
+  #     - foo/*.slow.json
+  #     - foo/*.slow.yml
+  #     - single/file.yml
+  #     refresh_interval: 10m
+  #   - files:
+  #     - bar/*.yaml
+
+  static_configs:
+  - targets: ['localhost:9090', 'localhost:9100']
+    labels:
+      host: workstation
+      hostmodel: 'dell inspiron'
+      machinetype: host
+
+# alerting:
+#   alertmanagers:
+#   - scheme: https
+#     static_configs:
+#     - targets:
+#       - "1.2.3.4:9093"
+#       - "1.2.3.5:9093"
+#       - "1.2.3.6:9093"
