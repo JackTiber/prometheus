@@ -31,7 +31,7 @@ scrape_configs:
   #   - files:
   #     - bar/*.yaml
   static_configs:
-  - targets: ['localhost:9090', 'localhost:9100']
+  - targets: ['workstation.wavefn.io:9090', 'workstation.wavefn.io:9100']
     labels:
       host: workstation
       hostmodel: 'dell inspiron'
