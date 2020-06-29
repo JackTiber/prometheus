@@ -1,6 +1,6 @@
 ---
 - name: Setup Prometheus
-  hosts: all
+  hosts: workstation
   become: yes
   vars:
     username: prometheus
@@ -100,4 +100,4 @@
         daemon_reload: yes
         enabled: yes
         name: prometheus
-        state: started
+        state: restarted

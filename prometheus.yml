@@ -14,8 +14,7 @@ remote_write: []
 remote_read: []
 
 scrape_configs:
-- job_name: prometheus
-
+- job_name: workstation
   honor_labels: true
   # scrape_interval is defined by the configured global (15s).
   # scrape_timeout is defined by the global default (10s).
@@ -31,12 +30,38 @@ scrape_configs:
   #     refresh_interval: 10m
   #   - files:
   #     - bar/*.yaml
-
   static_configs:
   - targets: ['localhost:9090', 'localhost:9100']
     labels:
       host: workstation
       hostmodel: 'dell inspiron'
+      machinetype: host
+
+- job_name: host-00
+  honor_labels: true
+  static_configs:
+  - targets: ['host-00.wavefn.io:9100']
+    labels:
+      host: host-00
+      hostmodel: 'dell r620'
+      machinetype: host
+
+- job_name: host-01
+  honor_labels: true
+  static_configs:
+  - targets: ['host-01.wavefn.io:9100']
+    labels:
+      host: host-01
+      hostmodel: 'dell r620'
+      machinetype: host
+
+- job_name: host-02
+  honor_labels: true
+  static_configs:
+  - targets: ['host-02.wavefn.io:9100']
+    labels:
+      host: host-02
+      hostmodel: 'dell t630'
       machinetype: host
 
 # alerting:

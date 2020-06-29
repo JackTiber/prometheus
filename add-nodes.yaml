@@ -1,0 +1,76 @@
+---
+- name: Add Nodes to Prometheus
+  hosts: nodes
+  become: yes
+  vars:
+    username: node_exporter
+    groupname: node_exporter
+    tempdirectory: "/tmp/node_expoter"
+    optionsDirectory: "/opt/node_exporter"
+    node_exporter_url: "https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz"
+
+  tasks:
+    - name: Add Prometheus Group
+      group:
+        name: "{{ groupname }}"
+        state: present
+
+    - name: Add Node Exporter User
+      user:
+        name: "{{ username }}"
+        groups: "{{ groupname }}"
+        shell: /bin/bash
+        state: present
+
+    - name: Create Temp Direcotry
+      file:
+        state: directory
+        path: "{{ tempdirectory }}"
+    
+    - name: Create Options Direcotry
+      file:
+        state: directory
+        path: "{{ optionsDirectory }}"
+
+    - name: Download & Extract Binary
+      unarchive:
+        dest: "{{ tempdirectory }}"
+        remote_src: yes
+        src: "{{ node_exporter_url }}"
+    
+    - name: Move Binaries to Path
+      copy:
+        dest: /usr/sbin
+        remote_src: yes
+        mode: '0755'
+        src: "{{ tempdirectory }}/node_exporter-1.0.1.linux-amd64/node_exporter"
+
+    - name: Change Ownership of Binary
+      file:
+        path: "/usr/sbin/node_exporter"
+        owner: "{{ username }}"
+        group: "{{ groupname }}"
+
+    - name: Copy Options File
+      copy:
+        src: node_exporter
+        dest: "{{ optionsDirectory }}"
+        mode: '0755'
+
+    - name: Change Ownership of Options Directory
+      file:
+        path: "{{ optionsDirectory }}"
+        owner: "{{ username }}"
+        group: "{{ groupname }}"
+
+    - name: Copy SystemD Service File
+      copy:
+        src: node-exporter.service
+        dest: /etc/systemd/system/node-exporter.service
+
+    - name: Start and Enable Node Exporter
+      systemd:
+        daemon_reload: yes
+        enabled: yes
+        name: node-exporter
+        state: started
